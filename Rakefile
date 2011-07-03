@@ -26,14 +26,11 @@ end
 # build gem with jeweler's help
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
-  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "ruby-encoding-wrapper"
   gem.description = "Simple wrapper for encoding.com API based on ruby."
   gem.email = "info@antonzaytsev.com"
   gem.homepage = "https://github.com/mikhailov/ruby-encoding-wrapper"
   gem.authors = ["Mikhailov Anatoly", "Tsech Edward", "Anton Zaytsev"]
-
-  gem.add_dependency 'nokogiri', '~> 1.2.0'
+  # dependencies defined in Gemfile
 end
-Jeweler::GemcutterTasks.new
 Jeweler::RubygemsDotOrgTasks.new

@@ -1,7 +1,6 @@
 require 'rubygems'
 require 'uri'
 require 'net/http'
-require 'builder' #TODO: remove it, Nokogiri is better solution
 require 'nokogiri'
 require 'rexml/document'
 
@@ -9,74 +8,161 @@ require 'rexml/document'
 module EncodingWrapper
 
   module Actions
-    ADD_MEDIA = "AddMedia"
-    GET_STATUS = "GetStatus"
-    CANCEL_MEDIA = "CancelMedia"
+    ADD_MEDIA     = "AddMedia"
+    UPDATE_MEDIA  = "UpdateMedia"
+    CANCEL_MEDIA  = "CancelMedia"
+    GET_STATUS    = "GetStatus"
   end
 
 
   module StatusType
-    NEW = "New"
-    WAITING = "Waiting for encoder"
-    PROCESSING = "Processing"
-    SAVING = "Saving"
-    FINISHED = "Finished"
-    ERROR = "Error"
+    NEW           = "New"
+    WAITING       = "Waiting for encoder"
+    PROCESSING    = "Processing"
+    SAVING        = "Saving"
+    FINISHED      = "Finished"
+    ERROR         = "Error"
+    DELETED       = "Deleted"
   end
 
   class Queue
     attr_reader :user_id, :user_key
 
-    API_ENDPOINT = 'http://manage.encoding.com/'
 
-
-    def initialize(user_id=nil, user_key=nil)
+    def initialize(user_id=nil, user_key=nil, url=nil)
       @user_id = user_id
       @user_key = user_key
+      @url = url || 'http://manage.encoding.com/'
     end
 
 
+      # format fields:
+      #   output (required):
+      #     flv, fl9, wmv, 3gp, mp4, m4v, ipod, iphone, ipad, android, ogg, webm, appletv, psp, zune, mp3, wma,
+      #     m4a, thumbnail, image,
+      #     mpeg2 (just experimental feature, please use with care, feedback is welcome),
+      #     iphone_stream, ipad_stream, muxer
     def request_encoding(action=nil, source=nil, notify_url=nil)
-      xml = Builder::XmlMarkup.new :indent => 2
-      xml.instruct! 
-      xml.query do |q|
-        q.userid @user_id
-        q.userkey @user_key
-        q.action action
-        q.source source
-        q.notify notify_url
-        q.format { |f| yield f }
+      # :size, :bitrate, :audio_bitrate, :audio_sample_rate,
+      # :audio_channels_number, :framerate, :two_pass, :cbr,
+      # :deinterlacing, :destination, :add_meta
+
+      xml = Nokogiri::XML::Builder.new do |q|
+        q.query {
+          q.userid  @user_id
+          q.userkey @user_key
+          q.action  action
+          q.source  source
+          q.notify  notify_url
+          q.format  { |f| yield f }
+        }
+      end.to_xml
+
+      response = request_send(xml)
+
+      if response.css('errors error').length != 0
+        message = response.css('errors error').text
+      else
+        message = response.css('response message').text
+        media_id = response.css('MediaID').text
       end
 
-      request_send(xml.target!)
+      {
+        :message => message,
+        :media_id => media_id
+      }
+
     end
 
 
     def request_status(media_id)
-      xml = Builder::XmlMarkup.new :indent => 2
-      xml.instruct!
-      xml.query do |q|
-        q.userid    @user_id
-        q.userkey   @user_key
-        q.action    EncodingWrapper::Actions::GET_STATUS
-        q.mediaid   media_id
+      xml = Nokogiri::XML::Builder.new do |q|
+        q.query {
+          q.userid    @user_id
+          q.userkey   @user_key
+          q.action    EncodingWrapper::Actions::GET_STATUS
+          q.mediaid   media_id
+        }
+      end.to_xml
+
+      response = request_send(xml)
+
+      status = response.css('status').text
+      progress = response.css('progress').text.to_i
+
+        # there is a bug where the progress reports
+        # as 100% if the status is 'Waiting for encoder'
+      if (status == EncodingWrapper::StatusType::WAITING)
+        progress = 0
       end
 
-      response = request_send(xml.target!)
+      {
+        :message => status,
+        :progress => progress
+      }
     end
 
 
     def cancel_media(media_id)
-      xml = Builder::XmlMarkup.new :indent => 2
-      xml.instruct!
-      xml.query do |q|
-        q.userid    @user_id
-        q.userkey   @user_key
-        q.action    EncodingWrapper::Actions::CANCEL_MEDIA
-        q.mediaid   media_id
+      xml = Nokogiri::XML::Builder.new do |q|
+        q.query {
+          q.userid    @user_id
+          q.userkey   @user_key
+          q.action    EncodingWrapper::Actions::CANCEL_MEDIA
+          q.mediaid   media_id
+        }
+      end.to_xml
+
+      response = request_send(xml)
+
+      if response.css('errors error').length != 0
+        message = response.css('errors error').text
+      else
+        message = response.css('response message').text
       end
 
-      response = request_send(xml.target!)
+      {
+        :message => message,
+      }
+    end
+
+
+      # format fields:
+      #   output (required):
+      #     flv, fl9, wmv, 3gp, mp4, m4v, ipod, iphone, ipad, android, ogg, webm, appletv, psp, zune, mp3, wma,
+      #     m4a, thumbnail, image,
+      #     mpeg2 (just experimental feature, please use with care, feedback is welcome),
+      #     iphone_stream, ipad_stream, muxer
+    def add_media(source=nil, notify_url=nil)
+      # :size, :bitrate, :audio_bitrate, :audio_sample_rate,
+      # :audio_channels_number, :framerate, :two_pass, :cbr,
+      # :deinterlacing, :destination, :add_meta
+
+      xml = Nokogiri::XML::Builder.new do |q|
+        q.query {
+          q.userid  @user_id
+          q.userkey @user_key
+          q.action  EncodingWrapper::Actions::ADD_MEDIA
+          q.source  source
+          q.notify  notify_url
+          q.format  { |f| yield f }
+        }
+      end.to_xml
+
+      response = request_send(xml)
+
+      if response.css('errors error').length != 0
+        message = response.css('errors error').text
+      else
+        message = response.css('response message').text
+        media_id = response.css('MediaID').text
+      end
+
+      {
+        :message => message,
+        :media_id => media_id
+      }
+
     end
 
 
@@ -85,9 +171,9 @@ module EncodingWrapper
     def build_query(action)
       query = Nokogiri::XML::Builder.new do |q|
         q.query {
-          q.userid @user_id
+          q.userid  @user_id
           q.userkey @user_key
-          q.action action
+          q.action  action
           yield q if block_given?
         }
       end.to_xml
@@ -101,6 +187,8 @@ module EncodingWrapper
       response = Net::HTTP.new(url.host, url.port).start { |http|
         http.request(request)
       }
+
+      Nokogiri::XML(response.body)
     end
 
   end

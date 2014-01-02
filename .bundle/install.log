@@ -1,0 +1,7 @@
+# Logfile created on 2014-01-02 12:15:37 +0530 by logger.rb/36483
+I, [2014-01-02T12:15:37.638534 #19064]  INFO -- : 0:  rake (10.1.1) from /home/hatchstation/.rvm/gems/ruby-2.0.0-p247@peep/specifications/rake-10.1.1.gemspec
+I, [2014-01-02T12:15:37.639085 #19064]  INFO -- : 0:  bundler (1.5.1) from /home/hatchstation/.rvm/gems/ruby-2.0.0-p247@peep/specifications/bundler-1.5.1.gemspec
+I, [2014-01-02T12:15:39.942249 #19064]  INFO -- : 0:  git (1.2.6) from /home/hatchstation/.rvm/gems/ruby-2.0.0-p247@peep/specifications/git-1.2.6.gemspec
+I, [2014-01-02T12:15:49.396451 #19064]  INFO -- : 0:  jeweler (1.6.4) from /home/hatchstation/.rvm/gems/ruby-2.0.0-p247@peep/specifications/jeweler-1.6.4.gemspec
+I, [2014-01-02T12:15:49.397514 #19064]  INFO -- : 0:  mini_portile (0.5.2) from /home/hatchstation/.rvm/gems/ruby-2.0.0-p247@peep/specifications/mini_portile-0.5.2.gemspec
+I, [2014-01-02T12:15:49.398479 #19064]  INFO -- : 0:  nokogiri (1.6.1) from /home/hatchstation/.rvm/gems/ruby-2.0.0-p247@peep/specifications/nokogiri-1.6.1.gemspec

@@ -94,7 +94,7 @@ module EncodingWrapper
       response[:progress] = false
 
       if response[:errors].length == 0
-        response[:status] = response[:xml].css('status').text
+        response[:status] = response[:xml].css('status').first.text
         response[:progress] = response[:xml].css('progress').text.to_i
 
         # there is a bug where the progress reports

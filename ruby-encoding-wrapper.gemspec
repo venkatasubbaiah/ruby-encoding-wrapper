@@ -37,7 +37,7 @@ Gem::Specification.new do |s|
   s.summary = nil
 
   s.add_dependency(%q<nokogiri>, ["~> 1.7.1"])
-  s.add_dependency(%q<bundler>, ["~> 1.0.0"])
-  s.add_dependency(%q<jeweler>, ["~> 1.6.3"])
+  s.add_development_dependency(%q<bundler>, ["~> 1.14.6"])
+  s.add_development_dependency(%q<jeweler>, ["~> 1.6.3"])
 end
 

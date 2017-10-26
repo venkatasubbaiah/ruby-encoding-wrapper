@@ -1,8 +1,8 @@
 source "http://rubygems.org"
 
-gem 'nokogiri', '~> 1.7.1'
+gem 'nokogiri'
 
 group :development do
-  gem "bundler", "~> 1.14.6"
-  gem "jeweler", "~> 1.6.3"
+  gem "bundler"
+  gem "jeweler"
 end

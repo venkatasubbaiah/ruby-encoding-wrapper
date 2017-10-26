@@ -36,7 +36,7 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.6.2}
   s.summary = nil
 
-  s.add_dependency(%q<nokogiri>, ["~> 1.7.1"])
+  s.add_dependency(%q<nokogiri>, [">= 1.8.1"])
   s.add_development_dependency(%q<bundler>, ["~> 1.14.6"])
   s.add_development_dependency(%q<jeweler>, ["~> 1.6.3"])
 end

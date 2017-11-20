@@ -6,15 +6,18 @@ GEM
       bundler (~> 1.0)
       git (>= 1.2.5)
       rake
-    mini_portile (0.5.2)
-    nokogiri (1.6.1)
-      mini_portile (~> 0.5.0)
+    mini_portile2 (2.3.0)
+    nokogiri (1.8.1)
+      mini_portile2 (~> 2.3.0)
     rake (10.1.1)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.5.1)
-  jeweler (~> 1.6.3)
-  nokogiri (~> 1.6.0)
+  bundler
+  jeweler
+  nokogiri
+
+BUNDLED WITH
+   1.15.4

@@ -45,7 +45,7 @@ module EncodingWrapper
       #     m4a, thumbnail, image,
       #     mpeg2 (just experimental feature, please use with care, feedback is welcome),
       #     iphone_stream, ipad_stream, muxer
-    def request_encoding(action=nil, source=nil, notify_url=nil)
+    def request_encoding(action=nil, source=nil, notify: {})
       # :size, :bitrate, :audio_bitrate, :audio_sample_rate,
       # :audio_channels_number, :framerate, :two_pass, :cbr,
       # :deinterlacing, :destination, :add_meta
@@ -56,18 +56,23 @@ module EncodingWrapper
           q.userkey @user_key
           q.action  action
           q.source  source
-          q.notify  notify_url
+          q.notify(notify[:url]) if notify.key?(:url)
+          q.notify_encoding_errors(notify[:encoding_errors]) if notify.key?(:encoding_errors)
+          q.notify_upload(notify[:upload]) if notify.key(:upload)
+          q.notify_upload_extended(notify[:upload_extended]) if notify.key(:upload_extended)
+          q.notify_live_start(notify[:live_start]) if notify.key(:live_start)
+          q.qc_notify(notify[:qc]) if notify.key(:qc)
           q.format  { |f| yield f }
         }
       end.to_xml
 
       response = request_send(xml)
 
-      if response.css('errors error').length != 0
-        message = response.css('errors error').text
+      if response[:errors].present?
+        message = response[:errors]
       else
-        message = response.css('response message').text
-        media_id = response.css('MediaID').text
+        message = response[:message]
+        media_id = response[:xml].css('MediaID').text
       end
 
       {
@@ -94,7 +99,7 @@ module EncodingWrapper
       response[:progress] = false
 
       if response[:errors].length == 0
-        response[:status] = response[:xml].css('status').text
+        response[:status] = response[:xml].css('status').first.text
         response[:progress] = response[:xml].css('progress').text.to_i
 
         # there is a bug where the progress reports
@@ -128,7 +133,7 @@ module EncodingWrapper
       #     m4a, thumbnail, image,
       #     mpeg2 (just experimental feature, please use with care, feedback is welcome),
       #     iphone_stream, ipad_stream, muxer
-    def add_media(source=nil, notify_url=nil)
+    def add_media(source=nil, notify: {})
       # :size, :bitrate, :audio_bitrate, :audio_sample_rate,
       # :audio_channels_number, :framerate, :two_pass, :cbr,
       # :deinterlacing, :destination, :add_meta
@@ -139,7 +144,12 @@ module EncodingWrapper
           q.userkey @user_key
           q.action  EncodingWrapper::Actions::ADD_MEDIA
           q.source  source
-          q.notify  notify_url
+          q.notify(notify[:url]) if notify.key?(:url)
+          q.notify_encoding_errors(notify[:encoding_errors]) if notify.key?(:encoding_errors)
+          q.notify_upload(notify[:upload]) if notify.key(:upload)
+          q.notify_upload_extended(notify[:upload_extended]) if notify.key(:upload_extended)
+          q.notify_live_start(notify[:live_start]) if notify.key(:live_start)
+          q.qc_notify(notify[:qc]) if notify.key(:qc)
           q.format  { |f| yield f }
         }
       end.to_xml
@@ -147,7 +157,7 @@ module EncodingWrapper
       response = request_send(xml)
 
       response[:media_id] = false
-      
+
       if response[:errors].length == 0
         response[:media_id] = response[:xml].css('MediaID').text
       end
@@ -155,8 +165,8 @@ module EncodingWrapper
       response
     end
 
-    def media_add(source=nil, notify_url=nil)
-      add_media(source, notify_url)
+    def media_add(source=nil, notify:{})
+      add_media(source, notify: notify)
     end
 
     def media_cancel(media_id)
@@ -180,7 +190,7 @@ module EncodingWrapper
 
       response[:list] = []
 
-      media_list = response[':xml'].css('response media')
+      media_list = response[:xml].css('response media')
 
       media_list.each do |media|
         obj = {}
@@ -222,14 +232,16 @@ module EncodingWrapper
       output = {:errors => [], :status => false, :xml => '', :message => ''}
       output[:xml] = Nokogiri::XML(response.body)
 
-      if response.css('errors error').length != 0
-        response.css('errors error').each { |error| output[:errors] << error.text }
+      errors = output[:xml].css('errors error')
+      if errors.length != 0
+        errors.each { |error| output[:errors] << error.text }
       else
         output[:status] = true
       end
 
-      if output[:xml].css('response message').length == 1
-        output[:message] = output[:xml].css('response message').text
+      response_messages = output[:xml].css('response message')
+      if response_messages.length == 1
+        output[:message] = response_messages.text
       end
 
       output
